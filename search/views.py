@@ -1,18 +1,15 @@
-from django.shortcuts import render
 from django.http import JsonResponse
-from .utils import load_bm25_model
+from .utils import load_bm25_model, preprocess
 
-
+# Load the BM25 model
 bm25_model = load_bm25_model()
 
 def search_query(request):
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     if not query:
-        return JsonResponse({'error': 'No query provided'}, status=400)
+        return JsonResponse({'error': 'Query parameter is missing'}, status=400)
     
-    
-    results = bm25_model.transform(query)
-    top_results = results[results['rank'] < 10].sort_values(by=['rank'])
-    response_data = top_results[['docno', 'rank']].to_dict(orient='records')
-    
-    return JsonResponse({'query': query, 'results': response_data})
+    processed_query = preprocess(query)
+    results = bm25_model.transform(processed_query)
+    top_results = results[results['rank'] < 30].sort_values(by=['rank'])
+    return JsonResponse(top_results.to_dict(orient='records'), safe=False)
