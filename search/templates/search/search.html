@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Engine{% endblock title %}
+
+{% block content %}
+<h1>Search Engine</h1>
+<form id="searchForm" class="mb-3">
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Enter your query..." id="query">
+        <button class="btn btn-primary" type="button" id="searchButton">Search</button>
+    </div>
+</form>
+
+<div id="results" class="mt-4">
+    <table class="table table-striped" id="resultTable">
+        <thead>
+            <tr>
+                <th>Docno</th>
+                <th>Preview</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Hasil pencarian akan dimasukkan di sini melalui JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Fungsi utama untuk melakukan pencarian
+    async function performSearch() {
+        const query = document.getElementById("query").value;
+        if (!query) {
+            alert("Please enter a query");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/search/?q=${query}`);
+            const data = await response.json();
+            renderResults(data);
+        } catch (error) {
+            console.error("Error fetching search results:", error);
+            alert("An error occurred while fetching search results.");
+        }
+    }
+
+    // Fungsi untuk merender hasil pencarian ke tabel
+    function renderResults(data) {
+        const resultTable = document.getElementById("resultTable").querySelector("tbody");
+        resultTable.innerHTML = ""; 
+
+        data.forEach(item => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><a href="/detail/${item.docno}/">${item.docno}</a></td>
+                <td>${item.text_raw.slice(0, 50)}...</td>
+            `;
+            resultTable.appendChild(row);
+        });
+    }
+
+    // Tambahkan event listener untuk tombol dan form
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchButton = document.getElementById("searchButton");
+        const searchForm = document.getElementById("searchForm");
+
+        // Klik tombol "Search"
+        searchButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            performSearch();
+        });
+
+        // Tekan tombol "Enter" pada keyboard
+        searchForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            performSearch();
+        });
+    });
+</script>
+{% endblock content %}
